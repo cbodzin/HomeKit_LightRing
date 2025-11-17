@@ -11,12 +11,13 @@ void setup() {
   new Characteristic::Identify();  
   new Characteristic::Manufacturer("CyCor");
   new Characteristic::Model("ESP32-RingLight");             
-  new My_LED(1,10,0);        // this instantiates a new LED Service.  Where is this defined?  What happpened to Characteristic::On?  Keep reading...
+  new My_LED(1,10,0);
 
 } 
 
 void loop(){
   
+  // Just see if we have anything to do
   homeSpan.poll();
   
 } 
