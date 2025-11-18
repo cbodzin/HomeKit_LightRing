@@ -1,13 +1,9 @@
-#include <cmath>
-#include "esp32-hal.h"
+// #include <sys/_stdint.h>
+#include <Adafruit_NeoPixel.h>
+
+Adafruit_NeoPixel ring(16, 1, NEO_GRB + NEO_KHZ800);
 
 void myHSVtoRGB(float h, float s, float v, int *r, int *g, int *b) {
-
-  // Are we just white?
-  if (s < 20) {
-    *r = *g = *b = 255 * v;
-    return;
-  }
 
   int i;
   float bright = (v/100);
@@ -66,17 +62,15 @@ void myHSVtoRGB(float h, float s, float v, int *r, int *g, int *b) {
 
 struct My_LED : Service::LightBulb { 
 
-  int redPin;
-  int greenPin;
-  int bluePin;
-  
+  int numLEDs;
+  int ringPin;
+
   SpanCharacteristic *power;
   SpanCharacteristic *H;
   SpanCharacteristic *S;
   SpanCharacteristic *V;
-
   
-  My_LED(int red, int green, int blue) : Service::LightBulb() {
+  My_LED(int ledCount, int pinNum ) : Service::LightBulb() {    
 
     power=new Characteristic::On();
     H=new Characteristic::Hue(0);
@@ -84,18 +78,18 @@ struct My_LED : Service::LightBulb {
     V=new Characteristic::Brightness(100);
     // V->setRange(5,100,1);
 
-    this->redPin=red;
-    this->greenPin=green;
-    this->bluePin=blue;
-    pinMode(redPin,OUTPUT);
-    pinMode(greenPin,OUTPUT);
-    pinMode(bluePin,OUTPUT);
-    
+    this->numLEDs=ledCount;
+    this->ringPin=pinNum;
+    ring.setPin(ringPin);
+    ring.updateLength(numLEDs);
+    ring.begin();
+    ring.clear();
+    ring.show();
+
   } 
 
   boolean update() {            
 
-    // float h, s, v, r, g, b;
     float h, s, v;
     int r, g, b;
     bool powerSwitch;
@@ -112,13 +106,12 @@ struct My_LED : Service::LightBulb {
 
     if (powerSwitch) {
       myHSVtoRGB(h, s, v, &r, &g, &b);
-      analogWrite(redPin, r);
-      analogWrite(greenPin, g);
-      analogWrite(bluePin, b);
+      uint32_t rgbcolor = ring.Color(r,g,b);
+      ring.fill(rgbcolor);
+      ring.show();
     } else {
-      analogWrite(redPin, 0);
-      analogWrite(greenPin, 0);
-      analogWrite(bluePin, 0);
+      ring.clear();
+      ring.show();
     }
     return(true);
   
